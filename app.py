@@ -155,10 +155,18 @@ def list_test_cases():
     filters = []
     params = []
     for i in range(1, 8):
-        val = request.args.get(f"d{i}", type=int)
-        if val:
+        val_id = request.args.get(f"d{i}", type=int)
+        val_str = request.args.get(f"d{i}_val")
+        if val_id:
             filters.append(f"tc.d{i}_id = ?")
-            params.append(val)
+            params.append(val_id)
+        elif val_str:
+            filters.append(
+                f"tc.d{i}_id IN ("
+                f"SELECT item_id FROM dropdown_items "
+                f"WHERE dropdown_num={i} AND LOWER(value)=LOWER(?))"
+            )
+            params.append(val_str)
 
     where = ("WHERE " + " AND ".join(filters)) if filters else ""
     conn = get_connection()

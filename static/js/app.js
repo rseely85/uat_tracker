@@ -154,6 +154,25 @@ function clearSelect(selectEl, placeholder) {
   selectEl.innerHTML = `<option value="">${placeholder || "— select —"}</option>`;
 }
 
+// Populate a filter dropdown with deduplicated values (unique by value string).
+// The option.value is the raw string (not an item_id), so the backend
+// receives it as a d{n}_val query param for cross-app matching.
+function populateFilterDeduped(selectEl, items, placeholder) {
+  const prev = selectEl.value; // preserve current selection if still valid
+  selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+  const seen = new Set();
+  items.forEach(item => {
+    const key = item.value.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    const opt = document.createElement("option");
+    opt.value = item.value;
+    opt.textContent = item.value;
+    if (item.value === prev) opt.selected = true;
+    selectEl.appendChild(opt);
+  });
+}
+
 // ================================================================
 // ================================================================
 // TAB: LIBRARY
@@ -174,55 +193,73 @@ async function initLibrary() {
 // Clearing a value resets fields to the right back to show all.
 function populateFilterBar() {
   populateSelect(document.getElementById("flt-d1"), ddItems(1), null, "All Apps");
-  populateSelect(document.getElementById("flt-d2"), ddItems(2), null, "All Groups");
-  populateSelect(document.getElementById("flt-d3"), ddItems(3), null, "All Functions");
-  populateSelect(document.getElementById("flt-d4"), ddItems(4), null, "All Sections");
-  populateSelect(document.getElementById("flt-d5"), ddItems(5), null, "All Fields");
-  populateSelect(document.getElementById("flt-d6"), ddItems(6), null, "All Func1");
-  populateSelect(document.getElementById("flt-d7"), ddItems(7), null, "All Func2");
+  populateFilterDeduped(document.getElementById("flt-d2"), ddItems(2), "All Groups");
+  populateFilterDeduped(document.getElementById("flt-d3"), ddItems(3), "All Functions");
+  populateFilterDeduped(document.getElementById("flt-d4"), ddItems(4), "All Sections");
+  populateFilterDeduped(document.getElementById("flt-d5"), ddItems(5), "All Fields");
+  populateFilterDeduped(document.getElementById("flt-d6"), ddItems(6), "All Func1");
+  populateFilterDeduped(document.getElementById("flt-d7"), ddItems(7), "All Func2");
 }
 
 ["flt-d1", "flt-d2", "flt-d3", "flt-d4", "flt-d5", "flt-d6", "flt-d7"].forEach(id => {
   document.getElementById(id).addEventListener("change", onFilterChange);
 });
 
+// Returns all item_ids at `num` whose value matches `valStr` (case-insensitive)
+function idsForValue(num, valStr) {
+  if (!valStr) return [];
+  return state.allDropdowns
+    .filter(d => d.dropdown_num === num && d.value.toLowerCase() === valStr.toLowerCase())
+    .map(d => d.item_id);
+}
+
+// Returns deduped children of items at `parentNum` with value `parentValStr`
+function dedupeChildrenOf(childNum, parentNum, parentValStr) {
+  if (!parentValStr) return ddItems(childNum);
+  const parentIds = new Set(idsForValue(parentNum, parentValStr));
+  return state.allDropdowns
+    .filter(d => d.dropdown_num === childNum && parentIds.has(d.parent_item_id))
+    .sort((a, b) => (a.sort_order - b.sort_order) || (a.item_id - b.item_id));
+}
+
 function onFilterChange(e) {
   const id = e.target.id;
-  // When a value is chosen → narrow the field to the right by parent.
-  // When cleared → reset the field to the right back to show all items.
+  // d1 is ID-based; selecting it narrows d2 to children of that app.
+  // d2-d7 are value-based; selecting one narrows the next level to
+  // unique values that are children of the selected value.
   if (id === "flt-d1") {
     const d1Val = intOrNull(document.getElementById("flt-d1").value);
-    populateSelect(document.getElementById("flt-d2"), d1Val ? ddItems(2, d1Val) : ddItems(2), null, "All Groups");
-    populateSelect(document.getElementById("flt-d3"), ddItems(3), null, "All Functions");
-    populateSelect(document.getElementById("flt-d4"), ddItems(4), null, "All Sections");
-    populateSelect(document.getElementById("flt-d5"), ddItems(5), null, "All Fields");
-    populateSelect(document.getElementById("flt-d6"), ddItems(6), null, "All Func1");
-    populateSelect(document.getElementById("flt-d7"), ddItems(7), null, "All Func2");
+    populateFilterDeduped(document.getElementById("flt-d2"), d1Val ? ddItems(2, d1Val) : ddItems(2), "All Groups");
+    populateFilterDeduped(document.getElementById("flt-d3"), ddItems(3), "All Functions");
+    populateFilterDeduped(document.getElementById("flt-d4"), ddItems(4), "All Sections");
+    populateFilterDeduped(document.getElementById("flt-d5"), ddItems(5), "All Fields");
+    populateFilterDeduped(document.getElementById("flt-d6"), ddItems(6), "All Func1");
+    populateFilterDeduped(document.getElementById("flt-d7"), ddItems(7), "All Func2");
   } else if (id === "flt-d2") {
-    const d2Val = intOrNull(document.getElementById("flt-d2").value);
-    populateSelect(document.getElementById("flt-d3"), d2Val ? ddItems(3, d2Val) : ddItems(3), null, "All Functions");
-    populateSelect(document.getElementById("flt-d4"), ddItems(4), null, "All Sections");
-    populateSelect(document.getElementById("flt-d5"), ddItems(5), null, "All Fields");
-    populateSelect(document.getElementById("flt-d6"), ddItems(6), null, "All Func1");
-    populateSelect(document.getElementById("flt-d7"), ddItems(7), null, "All Func2");
+    const d2Val = document.getElementById("flt-d2").value;
+    populateFilterDeduped(document.getElementById("flt-d3"), dedupeChildrenOf(3, 2, d2Val), "All Functions");
+    populateFilterDeduped(document.getElementById("flt-d4"), ddItems(4), "All Sections");
+    populateFilterDeduped(document.getElementById("flt-d5"), ddItems(5), "All Fields");
+    populateFilterDeduped(document.getElementById("flt-d6"), ddItems(6), "All Func1");
+    populateFilterDeduped(document.getElementById("flt-d7"), ddItems(7), "All Func2");
   } else if (id === "flt-d3") {
-    const d3Val = intOrNull(document.getElementById("flt-d3").value);
-    populateSelect(document.getElementById("flt-d4"), d3Val ? ddItems(4, d3Val) : ddItems(4), null, "All Sections");
-    populateSelect(document.getElementById("flt-d5"), ddItems(5), null, "All Fields");
-    populateSelect(document.getElementById("flt-d6"), ddItems(6), null, "All Func1");
-    populateSelect(document.getElementById("flt-d7"), ddItems(7), null, "All Func2");
+    const d3Val = document.getElementById("flt-d3").value;
+    populateFilterDeduped(document.getElementById("flt-d4"), dedupeChildrenOf(4, 3, d3Val), "All Sections");
+    populateFilterDeduped(document.getElementById("flt-d5"), ddItems(5), "All Fields");
+    populateFilterDeduped(document.getElementById("flt-d6"), ddItems(6), "All Func1");
+    populateFilterDeduped(document.getElementById("flt-d7"), ddItems(7), "All Func2");
   } else if (id === "flt-d4") {
-    const d4Val = intOrNull(document.getElementById("flt-d4").value);
-    populateSelect(document.getElementById("flt-d5"), d4Val ? ddItems(5, d4Val) : ddItems(5), null, "All Fields");
-    populateSelect(document.getElementById("flt-d6"), ddItems(6), null, "All Func1");
-    populateSelect(document.getElementById("flt-d7"), ddItems(7), null, "All Func2");
+    const d4Val = document.getElementById("flt-d4").value;
+    populateFilterDeduped(document.getElementById("flt-d5"), dedupeChildrenOf(5, 4, d4Val), "All Fields");
+    populateFilterDeduped(document.getElementById("flt-d6"), ddItems(6), "All Func1");
+    populateFilterDeduped(document.getElementById("flt-d7"), ddItems(7), "All Func2");
   } else if (id === "flt-d5") {
-    const d5Val = intOrNull(document.getElementById("flt-d5").value);
-    populateSelect(document.getElementById("flt-d6"), d5Val ? ddItems(6, d5Val) : ddItems(6), null, "All Func1");
-    populateSelect(document.getElementById("flt-d7"), ddItems(7), null, "All Func2");
+    const d5Val = document.getElementById("flt-d5").value;
+    populateFilterDeduped(document.getElementById("flt-d6"), dedupeChildrenOf(6, 5, d5Val), "All Func1");
+    populateFilterDeduped(document.getElementById("flt-d7"), ddItems(7), "All Func2");
   } else if (id === "flt-d6") {
-    const d6Val = intOrNull(document.getElementById("flt-d6").value);
-    populateSelect(document.getElementById("flt-d7"), d6Val ? ddItems(7, d6Val) : ddItems(7), null, "All Func2");
+    const d6Val = document.getElementById("flt-d6").value;
+    populateFilterDeduped(document.getElementById("flt-d7"), dedupeChildrenOf(7, 6, d6Val), "All Func2");
   }
   loadAndRenderLibrary();
 }
@@ -243,9 +280,13 @@ function intOrNull(v) {
 // ---------- Load and render ----------
 async function loadAndRenderLibrary() {
   const params = new URLSearchParams();
-  ["d1","d2","d3","d4","d5","d6","d7"].forEach((d, i) => {
+  // d1 is ID-based
+  const d1 = document.getElementById("flt-d1").value;
+  if (d1) params.set("d1", d1);
+  // d2-d7 are value-based (deduped filter dropdowns)
+  ["d2","d3","d4","d5","d6","d7"].forEach(d => {
     const v = document.getElementById(`flt-${d}`).value;
-    if (v) params.set(d, v);
+    if (v) params.set(`${d}_val`, v);
   });
   try {
     state.testCases = await api("GET", `/api/test-cases?${params.toString()}`);
@@ -259,6 +300,9 @@ async function loadAndRenderLibrary() {
 function renderLibraryTable() {
   const tbody = document.getElementById("library-tbody");
   tbody.innerHTML = "";
+  // Update result counter
+  const countEl = document.getElementById("filter-count");
+  if (countEl) countEl.textContent = `${state.testCases.length} item${state.testCases.length !== 1 ? "s" : ""}`;
   if (!state.testCases.length) {
     tbody.innerHTML = '<tr><td colspan="9" class="text-center text-muted" style="padding:20px">No test cases found</td></tr>';
     return;
