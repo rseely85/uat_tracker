@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UAT Tracker</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+
+  <!-- ===== NAV ===== -->
+  <header class="app-header">
+    <div class="app-title">UAT Tracker</div>
+    <nav class="tab-nav">
+      <button class="tab-btn active" data-tab="library">Library</button>
+      <button class="tab-btn" data-tab="groups">Groups</button>
+      <button class="tab-btn" data-tab="run">Run</button>
+      <button class="tab-btn" data-tab="history">History</button>
+      <button class="tab-btn" data-tab="settings">Settings</button>
+    </nav>
+  </header>
+
+  <!-- ===== TOAST ===== -->
+  <div id="toast" class="toast hidden"></div>
+
+  <!-- ================================================================= -->
+  <!-- TAB: LIBRARY                                                        -->
+  <!-- ================================================================= -->
+  <section id="tab-library" class="tab-content active">
+
+    <!-- ── Edit / New form — always visible at top ── -->
+    <div id="library-detail" class="detail-panel library-form-panel">
+      <!-- All 7 dropdowns on one line -->
+      <div class="form-row dd-row">
+        <div class="form-group dd-group">
+          <label>Application</label>
+          <select id="det-d1" class="form-select"><option value="">— select —</option></select>
+        </div>
+        <div class="form-group dd-group">
+          <label>Testing Group</label>
+          <select id="det-d2" class="form-select"><option value="">— select —</option></select>
+        </div>
+        <div class="form-group dd-group">
+          <label>Function Group</label>
+          <select id="det-d3" class="form-select"><option value="">— select —</option></select>
+        </div>
+        <div class="form-group dd-group">
+          <label>Section</label>
+          <select id="det-d4" class="form-select"><option value="">— select —</option></select>
+        </div>
+        <div class="form-group dd-group">
+          <label>Field / Button</label>
+          <select id="det-d5" class="form-select"><option value="">— select —</option></select>
+        </div>
+        <div class="form-group dd-group">
+          <label>Function 1</label>
+          <select id="det-d6" class="form-select"><option value="">— select —</option></select>
+        </div>
+        <div class="form-group dd-group">
+          <label>Function 2</label>
+          <select id="det-d7" class="form-select"><option value="">— select —</option></select>
+        </div>
+      </div>
+      <!-- Task + Notes side by side -->
+      <div class="form-row task-notes-row">
+        <div class="form-group flex-1">
+          <label>Task</label>
+          <textarea id="det-task" rows="3" class="form-textarea" placeholder="Describe the test task…"></textarea>
+        </div>
+        <div class="form-group flex-1">
+          <label>Notes</label>
+          <textarea id="det-notes" rows="3" class="form-textarea" placeholder="Optional notes…"></textarea>
+        </div>
+      </div>
+      <!-- Actions -->
+      <div class="detail-actions">
+        <div class="detail-actions-left">
+          <select id="det-add-group" class="form-select inline-select"><option value="">Add to Group…</option></select>
+          <button class="btn btn-secondary" id="btn-add-to-group">Add to Group</button>
+        </div>
+        <div class="detail-actions-right">
+          <span id="detail-title" class="detail-mode-label">New Test Case</span>
+          <button class="btn btn-secondary" id="btn-new-test">+ New Test</button>
+          <button class="btn btn-primary" id="btn-save-case">Save</button>
+          <button class="btn btn-ghost" id="btn-cancel-case">Cancel</button>
+          <button class="btn btn-danger hidden" id="btn-delete-case">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Filter bar — fixed, does not scroll ── -->
+    <div class="filter-bar library-filter-bar" id="library-filter-bar">
+      <select id="flt-d1" class="filter-select"><option value="">All Apps</option></select>
+      <select id="flt-d2" class="filter-select"><option value="">All Groups</option></select>
+      <select id="flt-d3" class="filter-select"><option value="">All Functions</option></select>
+      <select id="flt-d4" class="filter-select"><option value="">All Sections</option></select>
+      <select id="flt-d5" class="filter-select"><option value="">All Fields</option></select>
+      <select id="flt-d6" class="filter-select"><option value="">All Func1</option></select>
+      <select id="flt-d7" class="filter-select"><option value="">All Func2</option></select>
+      <button class="btn btn-ghost" id="btn-clear-filter">Clear</button>
+    </div>
+
+    <!-- ── Scrollable table — fills remaining height ── -->
+    <div class="table-wrapper library-table-wrapper" id="library-table-wrapper">
+      <table class="data-table" id="library-table">
+        <thead>
+          <tr>
+            <th>App</th><th>Group</th><th>Function</th><th>Section</th>
+            <th>Field</th><th>Func1</th><th>Func2</th>
+            <th>Task</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="library-tbody"></tbody>
+      </table>
+    </div>
+
+  </section>
+
+  <!-- ================================================================= -->
+  <!-- TAB: GROUPS                                                         -->
+  <!-- ================================================================= -->
+  <section id="tab-groups" class="tab-content">
+    <div class="two-col-layout">
+
+      <!-- Left: group list -->
+      <div class="col-left">
+        <div class="col-header">
+          <span class="col-title">Test Groups</span>
+          <button class="btn btn-primary btn-sm" id="btn-new-group">+ New Group</button>
+        </div>
+        <ul id="group-list" class="item-list"></ul>
+      </div>
+
+      <!-- Right: group detail -->
+      <div class="col-right" id="group-detail-panel">
+        <div id="group-detail-empty" class="empty-state">Select or create a group</div>
+
+        <div id="group-detail-content" class="hidden">
+          <div class="form-row">
+            <div class="form-group flex-2">
+              <label>Group Name</label>
+              <input type="text" id="grp-name" class="form-input" />
+            </div>
+            <div class="form-group flex-3">
+              <label>Description</label>
+              <input type="text" id="grp-desc" class="form-input" />
+            </div>
+            <button class="btn btn-primary align-bottom" id="btn-save-group">Save Changes</button>
+          </div>
+
+          <div class="section-header">
+            <span>Test Cases in Group</span>
+            <div class="section-header-actions">
+              <button class="btn btn-ghost btn-sm" id="btn-remove-case-from-group">Remove Selected</button>
+              <button class="btn btn-secondary btn-sm" id="btn-open-case-picker">+ Add Test Cases</button>
+              <button class="btn btn-primary btn-sm" id="btn-start-run-from-group">&#9654; Start New Run</button>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <table class="data-table" id="group-cases-table">
+              <thead>
+                <tr>
+                  <th></th><th>App</th><th>Menu</th><th>Section</th>
+                  <th>Field</th><th>Func1</th><th>Task</th>
+                </tr>
+              </thead>
+              <tbody id="group-cases-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Case Picker Modal -->
+    <div id="case-picker-modal" class="modal-backdrop hidden">
+      <div class="modal">
+        <div class="modal-header">
+          <span>Add Test Cases to Group</span>
+          <button class="modal-close" id="btn-close-picker">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="filter-bar compact" id="picker-filter-bar">
+            <label class="picker-select-all-label">
+              <input type="checkbox" id="picker-select-all" />
+              <span>All</span>
+            </label>
+            <select id="pflt-d1" class="filter-select"><option value="">All Apps</option></select>
+            <select id="pflt-d3" class="filter-select"><option value="">All Functions</option></select>
+            <select id="pflt-d4" class="filter-select"><option value="">All Sections</option></select>
+            <button class="btn btn-ghost btn-sm" id="btn-picker-clear">Clear</button>
+          </div>
+          <div class="table-wrapper modal-table-wrapper">
+            <table class="data-table" id="picker-table">
+              <thead>
+                <tr><th></th><th>App</th><th>Menu</th><th>Section</th><th>Field</th><th>Task</th></tr>
+              </thead>
+              <tbody id="picker-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="btn-confirm-add-cases">Add Selected</button>
+          <button class="btn btn-ghost" id="btn-cancel-picker">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================= -->
+  <!-- TAB: RUN                                                            -->
+  <!-- ================================================================= -->
+  <section id="tab-run" class="tab-content">
+    <div class="run-top-bar">
+      <select id="run-group-select" class="form-select run-group-select"><option value="">Select a Group…</option></select>
+      <button class="btn btn-primary" id="btn-start-run">Start New Run</button>
+    </div>
+
+    <div id="run-active-panel" class="hidden">
+      <div class="run-header">
+        <div class="run-header-left">
+          <input type="text" id="run-name-input" class="run-name-input" />
+          <span class="run-date" id="run-date-display"></span>
+        </div>
+        <div class="run-progress-wrapper">
+          <div class="run-progress-bar">
+            <div class="run-progress-fill" id="run-progress-fill"></div>
+          </div>
+          <span class="run-progress-label" id="run-progress-label">0 / 0 (0%)</span>
+        </div>
+      </div>
+
+      <div class="run-layout">
+        <div class="run-case-list-wrapper">
+          <table class="data-table run-table" id="run-case-table">
+            <thead>
+              <tr><th>Status</th><th>App</th><th>Menu</th><th>Section</th><th>Task</th></tr>
+            </thead>
+            <tbody id="run-case-tbody"></tbody>
+          </table>
+        </div>
+
+        <div id="run-detail-panel" class="run-detail hidden">
+          <div class="run-detail-task">
+            <div class="run-detail-label">Task</div>
+            <div id="run-task-text" class="run-task-text"></div>
+          </div>
+          <div class="run-detail-notes" id="run-case-notes-wrapper">
+            <div class="run-detail-label">Notes from definition</div>
+            <div id="run-case-notes" class="run-notes-text"></div>
+          </div>
+          <div class="form-group full-width">
+            <label>Result Notes</label>
+            <textarea id="run-result-notes" rows="3" class="form-textarea" placeholder="Optional notes for this result…"></textarea>
+          </div>
+          <div class="run-result-btns">
+            <button class="btn btn-pass" id="btn-pass">&#10003; PASS</button>
+            <button class="btn btn-fail" id="btn-fail">&#10007; FAIL</button>
+            <button class="btn btn-skip" id="btn-skip">&#8212; SKIP</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="run-footer">
+        <button class="btn btn-ghost" id="btn-save-run-progress">Save Progress</button>
+        <button class="btn btn-primary" id="btn-complete-run">Complete Run</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================= -->
+  <!-- TAB: HISTORY                                                        -->
+  <!-- ================================================================= -->
+  <section id="tab-history" class="tab-content">
+    <div class="filter-bar">
+      <select id="hist-group-filter" class="filter-select"><option value="">All Groups</option></select>
+      <select id="hist-status-filter" class="filter-select">
+        <option value="">All Statuses</option>
+        <option value="in_progress">In Progress</option>
+        <option value="complete">Complete</option>
+      </select>
+      <button class="btn btn-ghost btn-sm" id="btn-export-selected-run">Export Selected Run</button>
+      <button class="btn btn-ghost btn-sm" id="btn-export-all-runs">Export All Runs</button>
+      <button class="btn btn-ghost btn-sm" id="btn-print-history">Print / PDF</button>
+    </div>
+
+    <div class="table-wrapper" id="history-table-wrapper">
+      <table class="data-table" id="history-table">
+        <thead>
+          <tr>
+            <th>Date</th><th>Group</th><th>Run Name</th>
+            <th>Pass</th><th>Fail</th><th>Skip</th><th>Pending</th><th>Total</th><th>Pass%</th><th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================================================================= -->
+  <!-- TAB: SETTINGS                                                       -->
+  <!-- ================================================================= -->
+  <section id="tab-settings" class="tab-content">
+    <div class="two-col-layout settings-layout">
+
+      <!-- Left: dropdown level list -->
+      <div class="col-left col-left-narrow">
+        <div class="col-title">Dropdown Levels</div>
+        <ul class="item-list settings-level-list" id="settings-level-list">
+          <li class="item-list-row active" data-level="1">1: Application</li>
+          <li class="item-list-row" data-level="2">2: Testing Group</li>
+          <li class="item-list-row" data-level="3">3: Function Group</li>
+          <li class="item-list-row" data-level="4">4: Section</li>
+          <li class="item-list-row" data-level="5">5: Field / Button</li>
+          <li class="item-list-row" data-level="6">6: Function 1</li>
+          <li class="item-list-row" data-level="7">7: Function 2</li>
+        </ul>
+      </div>
+
+      <!-- Right: items for selected level -->
+      <div class="col-right">
+        <div class="settings-items-header">
+          <span id="settings-level-title">Dropdown 1: Application</span>
+          <button class="btn btn-primary btn-sm" id="btn-add-dd-item">+ Add Item</button>
+        </div>
+
+        <!-- Add form (hidden by default) -->
+        <div id="settings-add-form" class="settings-add-form hidden">
+          <div class="form-row compact-row">
+            <div class="form-group">
+              <label>Value</label>
+              <input type="text" id="settings-new-value" class="form-input" list="settings-value-suggestions" placeholder="Item name…" autocomplete="off" />
+              <datalist id="settings-value-suggestions"></datalist>
+              <span id="settings-value-hint" class="value-hint"></span>
+            </div>
+            <div class="form-group" id="settings-parent-group">
+              <label>Parent</label>
+              <select id="settings-new-parent" class="form-select"><option value="">— none —</option></select>
+            </div>
+            <button class="btn btn-primary align-bottom" id="btn-save-dd-item">Save</button>
+            <button class="btn btn-ghost align-bottom" id="btn-cancel-dd-item">Cancel</button>
+          </div>
+        </div>
+
+        <div class="table-wrapper">
+          <table class="data-table settings-table" id="settings-items-table">
+            <thead>
+              <tr><th>Value</th><th>Parent</th><th>Order</th><th>Actions</th></tr>
+            </thead>
+            <tbody id="settings-items-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
