@@ -1052,14 +1052,25 @@ const LEVEL_NAMES = [
 
 async function initSettings() {
   await loadAllDropdowns();
+  document.getElementById("settings-value-filter").value = "";
   renderSettingsLevelItems(state.settingsLevel);
 }
+
+document.getElementById("settings-value-filter").addEventListener("input", () => {
+  renderSettingsLevelItems(state.settingsLevel);
+});
+
+document.getElementById("btn-clear-settings-filter").addEventListener("click", () => {
+  document.getElementById("settings-value-filter").value = "";
+  renderSettingsLevelItems(state.settingsLevel);
+});
 
 document.querySelectorAll(".settings-level-list .item-list-row").forEach(li => {
   li.addEventListener("click", () => {
     document.querySelectorAll(".settings-level-list .item-list-row").forEach(r => r.classList.remove("active"));
     li.classList.add("active");
     state.settingsLevel = parseInt(li.dataset.level);
+    document.getElementById("settings-value-filter").value = "";
     renderSettingsLevelItems(state.settingsLevel);
     document.getElementById("settings-add-form").classList.add("hidden");
   });
@@ -1068,7 +1079,11 @@ document.querySelectorAll(".settings-level-list .item-list-row").forEach(li => {
 function renderSettingsLevelItems(level) {
   document.getElementById("settings-level-title").textContent = `Dropdown ${level}: ${LEVEL_NAMES[level]}`;
 
-  const items = ddItems(level, undefined);
+  const filterVal = (document.getElementById("settings-value-filter").value || "").trim().toLowerCase();
+  let items = ddItems(level, undefined);
+  if (filterVal) {
+    items = items.filter(i => i.value.toLowerCase().startsWith(filterVal));
+  }
   const tbody = document.getElementById("settings-items-tbody");
   tbody.innerHTML = "";
 

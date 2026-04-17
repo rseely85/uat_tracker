@@ -622,6 +622,40 @@ html, body {
 
 /* ---------- Settings Tab ---------- */
 .settings-layout { height: calc(100vh - 120px); }
+
+.settings-col-right {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0;
+}
+.settings-col-right .settings-items-header {
+  padding: 16px 16px 8px;
+  flex-shrink: 0;
+}
+.settings-col-right .settings-add-form {
+  flex-shrink: 0;
+  margin: 0 16px 8px;
+}
+.settings-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px 8px;
+  flex-shrink: 0;
+}
+.settings-filter-bar .form-input {
+  flex: 1;
+  padding: 5px 10px;
+  font-size: 13px;
+}
+.settings-col-right .table-wrapper {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  max-height: none;
+  margin: 0 16px 16px;
+}
 .settings-level-list { padding-top: 0; }
 .settings-items-header {
   display: flex;

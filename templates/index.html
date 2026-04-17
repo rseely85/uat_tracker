@@ -318,10 +318,16 @@
       </div>
 
       <!-- Right: items for selected level -->
-      <div class="col-right">
+      <div class="col-right settings-col-right">
         <div class="settings-items-header">
           <span id="settings-level-title">Dropdown 1: Application</span>
           <button class="btn btn-primary btn-sm" id="btn-add-dd-item">+ Add Item</button>
+        </div>
+
+        <!-- Value filter -->
+        <div class="settings-filter-bar">
+          <input type="text" id="settings-value-filter" class="form-input" placeholder="Filter by value…" autocomplete="off" />
+          <button class="btn btn-ghost btn-sm" id="btn-clear-settings-filter">Clear</button>
         </div>
 
         <!-- Add form (hidden by default) -->
