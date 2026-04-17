@@ -160,6 +160,10 @@ html, body {
   border: 1px solid var(--border);
   border-radius: var(--radius);
 }
+/* Checkbox column in tables */
+.cb-col, .cb-cell { width: 32px; min-width: 32px; text-align: center; padding: 0 4px !important; }
+.history-row-selected { background: #fff1f2 !important; }
+
 .picker-select-all-label {
   display: flex;
   align-items: center;
@@ -579,7 +583,10 @@ html, body {
 .run-detail-label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 4px; }
 .run-task-text { font-size: 14px; font-weight: 500; line-height: 1.5; color: var(--text); }
 .run-notes-text { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
-.run-result-btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; }
+.run-result-btns { display: flex; gap: 8px; flex-wrap: wrap; }
+.run-header .btn-pass,
+.run-header .btn-fail,
+.run-header .btn-skip { font-size: 13px; padding: 6px 14px; }
 
 .run-footer {
   display: flex;

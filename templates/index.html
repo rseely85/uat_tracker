@@ -223,6 +223,11 @@
           <input type="text" id="run-name-input" class="run-name-input" />
           <span class="run-date" id="run-date-display"></span>
         </div>
+        <div class="run-result-btns hidden" id="run-result-btns">
+          <button class="btn btn-pass" id="btn-pass">&#10003; PASS</button>
+          <button class="btn btn-fail" id="btn-fail">&#10007; FAIL</button>
+          <button class="btn btn-skip" id="btn-skip">&#8212; SKIP</button>
+        </div>
         <div class="run-progress-wrapper">
           <div class="run-progress-bar">
             <div class="run-progress-fill" id="run-progress-fill"></div>
@@ -254,11 +259,6 @@
             <label>Result Notes</label>
             <textarea id="run-result-notes" rows="3" class="form-textarea" placeholder="Optional notes for this result…"></textarea>
           </div>
-          <div class="run-result-btns">
-            <button class="btn btn-pass" id="btn-pass">&#10003; PASS</button>
-            <button class="btn btn-fail" id="btn-fail">&#10007; FAIL</button>
-            <button class="btn btn-skip" id="btn-skip">&#8212; SKIP</button>
-          </div>
         </div>
       </div>
 
@@ -283,12 +283,14 @@
       <button class="btn btn-ghost btn-sm" id="btn-export-selected-run">Export Selected Run</button>
       <button class="btn btn-ghost btn-sm" id="btn-export-all-runs">Export All Runs</button>
       <button class="btn btn-ghost btn-sm" id="btn-print-history">Print / PDF</button>
+      <button class="btn btn-ghost btn-sm" id="btn-delete-runs" disabled>Delete</button>
     </div>
 
     <div class="table-wrapper" id="history-table-wrapper">
       <table class="data-table" id="history-table">
         <thead>
           <tr>
+            <th class="cb-col"></th>
             <th>Date</th><th>Group</th><th>Run Name</th>
             <th>Pass</th><th>Fail</th><th>Skip</th><th>Pending</th><th>Total</th><th>Pass%</th><th>Status</th>
           </tr>

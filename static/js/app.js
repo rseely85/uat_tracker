@@ -457,6 +457,8 @@ document.getElementById("btn-save-case").addEventListener("click", async () => {
       toast("Test case created", "success");
     }
     await loadAndRenderLibrary();
+    // Refresh group detail if one is open so sort order stays current
+    if (state.selectedGroupId) loadGroupDetail(state.selectedGroupId);
   } catch (e) {
     toast(e.message, "error");
   }
@@ -875,6 +877,7 @@ function selectRunCase(caseId) {
   document.getElementById("run-case-notes").textContent = r.case_notes || "";
   document.getElementById("run-result-notes").value     = r.result_notes || "";
   document.getElementById("run-detail-panel").classList.remove("hidden");
+  document.getElementById("run-result-btns").classList.remove("hidden");
 }
 
 async function submitRunResult(result) {
@@ -899,6 +902,7 @@ async function submitRunResult(result) {
       selectRunCase(next.case_id);
     } else {
       document.getElementById("run-detail-panel").classList.add("hidden");
+      document.getElementById("run-result-btns").classList.add("hidden");
       toast("All cases complete!", "success");
     }
   } catch (e) {
@@ -975,6 +979,14 @@ async function loadHistory() {
 document.getElementById("hist-group-filter").addEventListener("change", renderHistoryTable);
 document.getElementById("hist-status-filter").addEventListener("change", renderHistoryTable);
 
+function updateHistoryDeleteBtn() {
+  const count = document.querySelectorAll(".history-check:checked").length;
+  const btn = document.getElementById("btn-delete-runs");
+  btn.textContent = count > 0 ? `Delete (${count})` : "Delete";
+  btn.disabled = count === 0;
+  btn.className = `btn btn-sm ${count > 0 ? "btn-danger" : "btn-ghost"}`;
+}
+
 function renderHistoryTable() {
   const groupFilter  = document.getElementById("hist-group-filter").value;
   const statusFilter = document.getElementById("hist-status-filter").value;
@@ -985,9 +997,10 @@ function renderHistoryTable() {
 
   const tbody = document.getElementById("history-tbody");
   tbody.innerHTML = "";
+  updateHistoryDeleteBtn();
 
   if (!runs.length) {
-    tbody.innerHTML = '<tr><td colspan="10" class="text-center text-muted" style="padding:20px">No runs found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11" class="text-center text-muted" style="padding:20px">No runs found</td></tr>';
     return;
   }
 
@@ -996,6 +1009,7 @@ function renderHistoryTable() {
     const tr = document.createElement("tr");
     tr.dataset.runId = run.run_id;
     tr.innerHTML = `
+      <td class="cb-cell"><input type="checkbox" class="history-check" data-id="${run.run_id}" /></td>
       <td>${formatDate(run.run_date)}</td>
       <td>${run.group_name || ""}</td>
       <td>${run.run_name || ""}</td>
@@ -1007,7 +1021,14 @@ function renderHistoryTable() {
       <td>${pct}%</td>
       <td>${badgeHtml(run.status)}</td>
     `;
-    tr.addEventListener("click", () => toggleHistoryExpand(run.run_id, tr));
+    tr.querySelector(".history-check").addEventListener("change", () => {
+      tr.classList.toggle("history-row-selected", tr.querySelector(".history-check").checked);
+      updateHistoryDeleteBtn();
+    });
+    tr.addEventListener("click", (e) => {
+      if (e.target.type === "checkbox") return;
+      toggleHistoryExpand(run.run_id, tr);
+    });
     tbody.appendChild(tr);
 
     // If currently expanded, re-expand
@@ -1038,7 +1059,7 @@ async function renderHistoryExpand(runId, tr) {
 
   const expandTr = document.createElement("tr");
   expandTr.className = "history-expand-row";
-  expandTr.innerHTML = `<td colspan="10" class="history-expand-row"><div class="history-expand-inner"></div></td>`;
+  expandTr.innerHTML = `<td colspan="11" class="history-expand-row"><div class="history-expand-inner"></div></td>`;
 
   const inner = expandTr.querySelector(".history-expand-inner");
   const results = runData.results || [];
@@ -1068,6 +1089,25 @@ async function renderHistoryExpand(runId, tr) {
   inner.appendChild(table);
   tr.after(expandTr);
 }
+
+// Delete selected runs
+document.getElementById("btn-delete-runs").addEventListener("click", async () => {
+  const checked = [...document.querySelectorAll(".history-check:checked")];
+  if (!checked.length) return;
+  if (!confirm(`Permanently delete ${checked.length} run${checked.length !== 1 ? "s" : ""} and all their results? This cannot be undone.`)) return;
+  let deleted = 0;
+  for (const cb of checked) {
+    try {
+      await api("DELETE", `/api/test-runs/${cb.dataset.id}`);
+      deleted++;
+    } catch { /**/ }
+  }
+  toast(`${deleted} run${deleted !== 1 ? "s" : ""} deleted`, "success");
+  if (state.expandedRunId && checked.some(cb => parseInt(cb.dataset.id) === state.expandedRunId)) {
+    state.expandedRunId = null;
+  }
+  await loadHistory();
+});
 
 // Export buttons
 document.getElementById("btn-export-selected-run").addEventListener("click", () => {

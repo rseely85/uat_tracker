@@ -321,8 +321,16 @@ def get_test_group(group_id):
         """SELECT tc.*, tgc.sort_order AS group_sort
            FROM test_cases tc
            JOIN test_group_cases tgc ON tgc.case_id = tc.case_id
+           LEFT JOIN dropdown_items d3 ON d3.item_id = tc.d3_id
+           LEFT JOIN dropdown_items d4 ON d4.item_id = tc.d4_id
+           LEFT JOIN dropdown_items d5 ON d5.item_id = tc.d5_id
+           LEFT JOIN dropdown_items d6 ON d6.item_id = tc.d6_id
            WHERE tgc.group_id = ?
-           ORDER BY tgc.sort_order, tc.case_id""",
+           ORDER BY COALESCE(d3.sort_order, 999),
+                    COALESCE(d4.sort_order, 999),
+                    COALESCE(d5.sort_order, 999),
+                    COALESCE(d6.sort_order, 999),
+                    tc.case_id""",
         (group_id,),
     ).fetchall()
     cases = [resolve_labels(conn, dict(r)) for r in cases_rows]
@@ -522,6 +530,19 @@ def update_test_run(run_id):
     row = conn.execute("SELECT * FROM test_runs WHERE run_id=?", (run_id,)).fetchone()
     conn.close()
     return ok(row_to_dict(row))
+
+
+@app.route("/api/test-runs/<int:run_id>", methods=["DELETE"])
+def delete_test_run(run_id):
+    try:
+        conn = get_connection()
+        conn.execute("DELETE FROM test_results WHERE run_id=?", (run_id,))
+        conn.execute("DELETE FROM test_runs WHERE run_id=?", (run_id,))
+        conn.commit()
+        conn.close()
+        return ok({"deleted": run_id})
+    except Exception as e:
+        return err(str(e), 500)
 
 
 @app.route("/api/test-runs/<int:run_id>/results/<int:case_id>", methods=["POST"])
