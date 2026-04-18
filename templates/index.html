@@ -215,6 +215,11 @@
     <div class="run-top-bar">
       <select id="run-group-select" class="form-select run-group-select"><option value="">Select a Group…</option></select>
       <button class="btn btn-primary" id="btn-start-run">Start New Run</button>
+      <div class="run-top-divider"></div>
+      <div id="run-resume-section" style="display:none;align-items:center;gap:8px;">
+        <select id="run-resume-select" class="form-select run-group-select"><option value="">In-Progress Runs…</option></select>
+        <button class="btn btn-secondary" id="btn-resume-run">Resume</button>
+      </div>
     </div>
 
     <div id="run-active-panel" class="hidden">
@@ -247,17 +252,22 @@
         </div>
 
         <div id="run-detail-panel" class="run-detail hidden">
-          <div class="run-detail-task">
-            <div class="run-detail-label">Task</div>
-            <div id="run-task-text" class="run-task-text"></div>
+          <!-- Top zone: editable task -->
+          <div class="run-detail-zone run-task-zone">
+            <div class="run-detail-zone-header">
+              <span class="run-detail-label">Task</span>
+              <button class="btn btn-ghost btn-sm" id="btn-edit-task">Edit</button>
+            </div>
+            <textarea id="run-task-text" class="form-textarea run-task-textarea" readonly></textarea>
+            <div id="run-case-notes-wrapper" class="run-notes-row">
+              <span class="run-detail-label">Notes</span>
+              <div id="run-case-notes" class="run-notes-text"></div>
+            </div>
           </div>
-          <div class="run-detail-notes" id="run-case-notes-wrapper">
-            <div class="run-detail-label">Notes from definition</div>
-            <div id="run-case-notes" class="run-notes-text"></div>
-          </div>
-          <div class="form-group full-width">
-            <label>Result Notes</label>
-            <textarea id="run-result-notes" rows="3" class="form-textarea" placeholder="Optional notes for this result…"></textarea>
+          <!-- Bottom zone: result notes -->
+          <div class="run-detail-zone run-result-zone">
+            <div class="run-detail-label">Result Notes</div>
+            <textarea id="run-result-notes" class="form-textarea run-result-textarea" placeholder="Optional notes for this result…"></textarea>
           </div>
         </div>
       </div>

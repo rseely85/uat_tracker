@@ -788,11 +788,39 @@ async function initRun() {
     sel.appendChild(opt);
   });
 
+  // Populate in-progress runs in the resume section
+  try {
+    const allRuns = await api("GET", "/api/test-runs");
+    const inProgress = allRuns.filter(r => r.status === "in_progress");
+    const resumeSec = document.getElementById("run-resume-section");
+    const resumeSel = document.getElementById("run-resume-select");
+    if (inProgress.length) {
+      resumeSel.innerHTML = '<option value="">In-Progress Runs…</option>';
+      inProgress.forEach(r => {
+        const opt = document.createElement("option");
+        opt.value = r.run_id;
+        opt.textContent = `${r.run_name} (${r.pending_count} left)`;
+        resumeSel.appendChild(opt);
+      });
+      resumeSec.style.display = "flex";
+    } else {
+      resumeSec.style.display = "none";
+    }
+  } catch { /**/ }
+
   // Restore active run if any
   if (state.activeRunId) {
     await renderActiveRun(state.activeRunId);
   }
 }
+
+document.getElementById("btn-resume-run").addEventListener("click", async () => {
+  const runId = intOrNull(document.getElementById("run-resume-select").value);
+  if (!runId) { toast("Select a run to resume"); return; }
+  state.activeRunId = runId;
+  await renderActiveRun(runId);
+  toast("Run resumed", "success");
+});
 
 document.getElementById("btn-start-run").addEventListener("click", async () => {
   const groupId = intOrNull(document.getElementById("run-group-select").value);
@@ -873,9 +901,12 @@ function selectRunCase(caseId) {
   });
   const r = state.activeRunResults.find(r => r.case_id === caseId);
   if (!r) return;
-  document.getElementById("run-task-text").textContent  = r.task  || "(no task defined)";
-  document.getElementById("run-case-notes").textContent = r.case_notes || "";
-  document.getElementById("run-result-notes").value     = r.result_notes || "";
+  document.getElementById("run-task-text").value        = r.task  || "";
+  document.getElementById("run-task-text").readOnly      = true;
+  document.getElementById("btn-edit-task").textContent   = "Edit";
+  document.getElementById("run-case-notes").textContent  = r.case_notes || "";
+  document.getElementById("run-case-notes-wrapper").style.display = r.case_notes ? "" : "none";
+  document.getElementById("run-result-notes").value      = r.result_notes || "";
   document.getElementById("run-detail-panel").classList.remove("hidden");
   document.getElementById("run-result-btns").classList.remove("hidden");
 }
@@ -913,6 +944,39 @@ async function submitRunResult(result) {
 document.getElementById("btn-pass").addEventListener("click", () => submitRunResult("pass"));
 document.getElementById("btn-fail").addEventListener("click", () => submitRunResult("fail"));
 document.getElementById("btn-skip").addEventListener("click", () => submitRunResult("skip"));
+
+// Edit / Save task inline from the Run panel
+document.getElementById("btn-edit-task").addEventListener("click", async () => {
+  const textarea = document.getElementById("run-task-text");
+  const btn      = document.getElementById("btn-edit-task");
+
+  if (textarea.readOnly) {
+    // Switch to edit mode
+    textarea.readOnly = false;
+    textarea.focus();
+    btn.textContent = "Save";
+    btn.classList.replace("btn-ghost", "btn-primary");
+  } else {
+    // Save back to the test case
+    const newTask = textarea.value.trim();
+    if (!newTask) { toast("Task cannot be empty"); return; }
+    const caseId  = state.selectedRunCaseId;
+    if (!caseId)  return;
+    try {
+      await api("PUT", `/api/test-cases/${caseId}`, { task: newTask });
+      // Update local run results so subsequent re-renders stay current
+      const r = state.activeRunResults.find(r => r.case_id === caseId);
+      if (r) r.task = newTask;
+      renderRunCaseList();
+      textarea.readOnly = true;
+      btn.textContent   = "Edit";
+      btn.classList.replace("btn-primary", "btn-ghost");
+      toast("Task updated", "success");
+    } catch (e) {
+      toast(e.message, "error");
+    }
+  }
+});
 
 document.getElementById("btn-save-run-progress").addEventListener("click", () => {
   toast("Progress saved (auto-saved on each result)", "success");
